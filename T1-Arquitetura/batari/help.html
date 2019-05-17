@@ -1,0 +1,969 @@
+<html><head>
+Please click on the topic below for help:
+<pre>
+<a href="#sop">$ operator</a>
+<a href="#pop">% operator</a>
+<a href="#add">addition</a>
+<a href="#ari">arithmetic operators (+,-,*,/)</a>
+<a href="#arr">arrays</a>
+<a href="#asm">asm statement</a>
+<a href="#bal">ball</a>
+<a href="#bin">binary numbers</a>
+<a href="#bit">bits, accessing</a>
+<a href="#bitw">bitwise (logical) operators (&, |, ^)</a>
+<a href="#boo">boolean operators (&&, ||, !)</a>
+<a href="#col">collision() function</a>
+<a href="#con">Console Switches</a>
+<a href="#dat">data statement</a>
+<a href="#dec">decimal numbers</a>
+<a href="#dim">dim statement</a>
+<a href="#div">division</a>
+<a href="#dra">drawscreen command</a>
+<a href="#for">for-next statement</a>
+<a href="#gos">gosub statement</a>
+<a href="#hex">hexadecimal numbers</a>
+<a href="#if">if-then statements</a>
+<a href="#ind">indexing</a>
+<a href="#inl">inline assembly</a>
+<a href="#joy">Joysticks</a>
+<a href="#ker">kernel</a>
+<a href="#lab">labels</a>
+<a href="#let">let statement</a>
+<a href="#lin">linenumbers</a>
+<a href="#loo">loops</a>
+<a href="#mem">memory</a>
+<a href="#mis">missiles</a>
+<a href="#mul">multiplication</a>
+<a href="#neg">negative numbers</a>
+<a href="#nex">next keyword</a>
+<a href="#on">on ... goto statement</a>
+<a href="#pfh">pfhline statement </a>
+<a href="#pfp">pfpixel statement </a>
+<a href="#pfs">pfscroll command</a>
+<a href="#pfv">pfvline statement  </a>
+<a href="#pla">player graphics   </a>
+<a href="#plaf">playfield</a>
+<a href="#ran">rand function</a>
+<a href="#rem">rem statement</a>
+<a href="#ret">return statement</a>
+<a href="#sco">score keyword</a>
+<a href="#sou">sound   </a>
+<a href="#spr">sprites</a>
+<a href="#sub">subtraction</a>
+<a href="#TIA">TIA registers</a>
+<a href="#tim">timing</a>
+<a href="#var">variables</a>
+<a href="#whi">whitespace</a>
+
+
+
+
+
+
+
+<font size=+3><a name="sop">$ operator</a></font>
+The '$' operator is provided so that you can use hexadecimal numbers in your programs.  
+You may use this nearly anywhere that you would normally place a number.  The major 
+exception is when trying to access individual bits of a variable or register.
+
+Simply place the '$' before a number to use hexadecimal.
+
+Examples:
+
+COLUPF=$2E
+a[$12]=$F5
+
+<font size=+3><a name="pop">% operator</a></font>
+The '%' operator is provided so that you can use binary numbers in your programs.  
+You may use this nearly anywhere that you would normally place a number.
+
+The % operator is particularly useful for accessing certain TIA registers that expect 
+individual bits to be set or cleared, without needing to first convert the numbers to 
+hexidecimal or decimal first.  The % operator is also useful for defining player sprites.
+
+Simply place the '%' before a number to use hexadecimal.  Make sure that you define all 
+8 bits in the byte.
+
+Examples:
+
+CTRLPF=%00100010
+
+player0:
+ %00100010
+ %11100111
+end
+
+<font size=+3><a name="add">addition</a></font>
+The '+' operator is used for addition.  For most vaiables and registers, Batari Basic 
+supports simple expressions only, and accepts any combination of registers, 
+variables, unsigned values from 0-255 or signed values from -128 to 127 (see also 
+"negative numbers.")
+
+In the event that the addition causes the result to equal or exceed 256, it will be 
+wrapped around at 0.  For instance, 255+1=0, 255+2=1, ... 255+255=254.
+
+An exception is the score, which can work with values from 0 - 999999.
+
+Examples:
+
+a=a+1
+COLUPF=r+$5F
+player0y=player1y+6
+
+<font size=+3><a name="ari">arithmetic operators (+,-,*,/)</a></font>
+Batari Basic supports simple expressions with the arithmetic operators.  For more 
+information about these operators, see topics addition, subtraction, multiplication and 
+division.
+
+<font size=+3><a name="arr">arrays</a></font>
+Since the Atari 2600 is severly limited in RAM, arrays in Batari Basic work somewhat 
+differently than other Basic languages.  There are two types of arrays, those in RAM 
+and those in ROM.
+
+Arrays in RAM
+In RAM, an array does not have exclusive access to its own memory.  Instead, this 
+memory is shared with other variables.  
+
+For instance, In Batari Basic, a[0] is exactly the same as a.  a[1] is the same as b.  
+a[25] is the same as z.  You are not limited to a; you may use any variable, but they 
+will all map to the other variables.  For example, b[1] is the same as c, t[2] is the 
+same as v.
+
+In a sense, arrays in RAM are merely for convenience, so that one can automate certain 
+operations instead of always explicitly specifying variables.
+
+Note that the compiler will also accept values that are beyond the normal bounds, such 
+as a[40].  Doing so will point to RAM that you may not want to modify, or may even 
+point to TIA registers.  It is not recommended that you try to access arrays outside 
+the normal variable memory space unless you know what you are doing.
+
+Arrays in ROM
+For convenience, you may specify a list of values that will essentially create a 
+read-only array in ROM.  You create these lists of values as data tables using the data 
+statement.
+
+Suppose you declare a data statement as follows, with array name "mydata"
+
+ data mydata
+ 200, 43, 33, 93, 255, 54, 22
+end
+
+To access the elements of the data table, simply index it like you would an array in 
+RAM.  For example, mydata[0] is 200, mydata[1] is 43, ... and mydata[6] is 22.  The 
+maximum size for a data table is 256 elements.  Note that you may access values beyond 
+the table, but the values you get there probably won't be very useful.
+
+Note again that these data tables are in ROM.  Attempting to write values to data 
+tables with commands like mydata[1]=200 will compile but will perform no function.
+
+<font size=+3><a name="asm">asm statement</a></font>
+Use the asm statement to insert inline assembly language into your program.  You 
+do not need to preserve any register values when using this feature, except the stack 
+pointer. Mnemonics should be indented by at least one space, and labels should not be 
+indented.
+
+Example (clears the playfield)
+ asm
+ ldx #47
+ lda #0
+playfieldclear
+ sta playfield,x
+ dex 
+ bne playfieldclear
+end
+
+You may also access any variables from assembly that are defined in Batari Basic.  For 
+example, another way to express the statement a=20 is:
+
+asm
+ lda #20
+ sta a
+end
+
+For more information about 6502 assembly language, a good reference is www.6502.org.
+
+<font size=+3><a name="bal">ball</a></font>
+The ball is one of the objects that the Atari 2600 can display in the screen.
+
+Alpha 0.2 does not support the ball, but support is expected by Alpha 0.3.
+
+Although the registers that are allocated to the ball, namely ballx, bally and 
+ballheight, are unused at this time, their use for general storage is not recommended 
+since future versions of Batari Basic may act unexpectedly when using these registers 
+for other purposes.
+
+<font size=+3><a name="bin">binary numbers</a></font>
+Sometimes it is convenient to express numbers as binary instead of decimal or 
+hexadecimal, such as when accessing individual bits in TIA registers or defining player 
+sprites.  To express numbers as binary, prepend them with a "%".  
+
+See also: "% operator."
+
+
+<font size=+3><a name="bit">bits, accessing</a></font>
+
+On modern systems, one may not think twice of using an entire byte or even a word for
+every flag.  For example, to determine whether a game is in progress or it is over,
+often an entire byte is used even though its only value is 0 or 1. 
+
+Since the Atari 2600 only has 128 bytes of RAM, and Batari Basic only has 26 bytes 
+available for variables, it is very likely that you will need to using 
+individial bits for game state information.  For example, a common flag is to determine 
+whether a game is over or it is still in progress.
+
+The bits of a byte are numbered from 0 to 7, with 0 being the least significant 
+bit (LSB) or smallest.  
+
+For example, to access the LSB in a variable or register:
+
+a(0)=1
+a(0)=0
+if a(0)=0 then gameover
+
+<font size=+3><a name="bitw">bitwise (logical) operators (&, |, ^)</a></font>
+Batari Basic has three operators for logical operations.  They are tokenized as:
+& = AND
+| = OR (Note: the "|" key is usually above the backslash: "\")
+^ = XOR (exclusive OR)
+
+These can be used to change the state of individual bits or to mask multiple bits.
+
+Examples:
+a=a & $0F
+a=b ^ %00110000
+a=a | 1
+
+<font size=+3><a name="boo">boolean operators (&&, ||, !)</a></font>
+Boolean operators are used as conditions in if-then statements.  They are tokenized as:
+&& = AND
+|| = OR
+! = NOT
+
+The current version of Batari Basic supports at most ONE boolean operator per if-then 
+statement.  The NOT (!) operator may only be used with statements that do not include a 
+comparison token (such as =,<,>, or <>.)
+
+Examples:
+
+if a<31 && a>0 then 50
+if a=2 || a=4 then a=a+1
+if !joy0up then 200
+
+<font size=+3><a name="col">collision() function</a></font>
+This function is used for checking if two objects have collided on the screen.  Valid 
+arguments are playfield, ball, player0, player1, missile0, missile1.  The two objects 
+can be specified in any order.
+
+The collision() function is only valid when used in an if-then statement.
+
+Examples:
+if collision(playfield,player0) then a=a+1
+if !collision(player0,missile1) then 400
+
+
+<font size=+3><a name="con">console switches</a></font>
+Reading the console switches is done by using an if-then statement.
+
+switchreset: true if Reset is pressed
+switchbw: true if the COLOR/BW switch is set to BW, false if set to COLOR.
+switchselect: true if Select is pressed
+switchleftb: true if left difficulty is set to b, false if a
+switchrightb: true if right difficulty is set to b, false if a
+
+These are accessed by, for example:
+
+if switchreset then 200
+
+These can all be inverted by the NOT (!) token:
+
+if !switchreset then 200
+
+<font size=+3><a name="dat">data statement</a></font>
+Although the data statement is similar in its method of operation as in other Basic 
+languages, there are some important differences.  Most notably, access to the data does 
+not need to be linear, as with the read function in other Basics.
+
+In Batari Basic, any element of the data statement can be accessed at any time.  In 
+this vein, it operates like an array.
+
+To declare a set of data, use "data" at the end of a line, then include an identifier 
+after the statement.  The actual data is included after a linefeed and can continue for 
+a number of lines before being terminated by "end."
+
+Example:
+ data musictones
+ 31,55,76,44,33,18,12,1,2,3,4,5,6,7
+ 55,76,0,76,43,$1F
+end
+
+You access the data as an array.  See "arrays" for more information.
+
+<font size=+3><a name="dec">decimal numbers</a></font>
+Numbers in Batari Basic are assumed to be in decimal unless otherwise specified by either 
+the $ (for hexadecimal) or the % (for binary.)
+
+One exception is signed numbers with the negative bit set, when expressed as a 
+negative.  See negative numbers for more information.
+
+<font size=+3><a name="dim">dim statement</a></font>
+Unlike other Basics, the dim statement is not used for arrays in Batari Basic, but 
+rather for aliasing the existing variables a-z.
+
+The dim statement is useful when you want to use a more descriptive name for your 
+variables than a-z.  The statement simply maps a descriptive name to the original 26 
+variables.
+
+Although dim is typically called at the beginning of the program, it can actually be 
+called at any time, and the aliasing is applicable to the entire program no matter 
+where it is placed.
+
+Examples:
+
+ dim monsterxpos=a
+ dim monsterypos=b
+
+Note that more than one alias may be mapped the the same variable.  This is useful for 
+when you will inevitably need to reuse variables in multiple places.
+
+<font size=+3><a name="div">division</a></font>
+Division in Batari Basic is limited to divides by 2.  If you try to specify a divisor 
+other than 2, it will be ignored and will compile a divide by 2 anyway.  This may be 
+updated in later versions to include division by any number.
+
+<font size=+3><a name="dra">drawscreen command</a></font>
+The drawscreen command displays the screen.  Any objects with changed colors, positions 
+or height will be updated.  Internally, this command runs the display kernel.
+
+Normally, drawscreen is called once within the normal game loop, but it can be called 
+anywhere.  The drawscreen operation takes about 12 milliseconds to complete, since it 
+needs to render the entire television display, one scanline at a time.  Control will be 
+returned to Batari Basic once the visible portion of the screen has been rendered.
+
+It is important to note that the drawscreen command must be run at least 60 times a
+second.  Aside from rendering the visible screen, drawscreen also sends synchronization
+signals to the television.  Failure to run drawscreen quicky enough will result in a 
+display that shakes, jitters, or at worst, rolls.
+
+Therefore, it is possible that your game loop will take up too much time and cause the
+television to lose sync.  Note that your game loop cannot execute for around 2
+milliseconds, so you should keep the number of loops and calls to playfield scrolling
+routines to a minimum.  This works out to about 2,700 machine cycles, which can get 
+used up pretty fast if you are doing many complicated operations.
+
+If your screen rolls, jitters or shakes, the only solution is to simplify your 
+operations or to try and spread your operations across two or more television frames by 
+calling drawscreen at strategic times.  Note also that doing so may slow your game down 
+if you do not also move your sprites or other objects between calls to drawscreen.
+
+However, at the time of this writing, nobody has complained of Batari Basic using too 
+many cycles.
+
+
+<font size=+3><a name="for">for-next statement</a></font>
+
+For-next loops work similar to the way they work in other Basics.
+
+The syntax is:
+for variable=value1 to value2 [step value3]
+
+variable is any variable, and value1,2,and 3 can be variables or numbers.  You may also 
+specify a negative step for value3.
+
+The "step" keyword is optional.  Omitting it will default the step to 1.
+
+Examples:
+ for x=1 to 10
+ for a=b to c step d
+ for l=player0y to 0 step -1
+
+One important difference, however, is with "next."  Normally, one would place a 
+variable after the next keyword, but Batari Basic ignores the keyword and instead finds 
+the nearest "for."  Therefore, the usual way to call "next" is without any variable.
+
+Example:
+ for x=1 to 10: a[x]=x: next
+
+It is also important to note that the "next" doesn't care about the program flow - it 
+will instead find the nearest for based on distance.
+
+For example:
+
+ for x=1 to 20
+ goto 100
+ for g=2 to 49
+100 next
+
+The "next" above WILL NOT jump back to the first for, instead it will jump to the 
+nearest one, even if this statement has never been executed.  Therefore, you should be 
+very careful when using next.
+
+
+
+<font size=+3><a name="gos">gosub statement</a></font>
+The gosub statement is often used for a subroutine that is called by multiple locations 
+throughout your program.  Example:
+
+gosub 100
+gosub mysubroutine
+
+To return control back to the main program, issue a return in your subroutine.
+
+Note that each gosub will use two bytes of stack space, which will be recovered after a 
+return.  Only 6 bytes of stack space are reserved for this, so do not use too many 
+nested subroutines, especially since this may be changed in later versions.
+
+<font size=+3><a name="hex">hexadecimal numbers</a></font>
+Often it is handy to express hexadecimal numbers in your Basic program.  To specify 
+hexidecimal, prepend the number with a $.  For more information, see ?? some other 
+section that I forgot the name of ??
+
+<font size=+3><a name="if">if-then statements</a></font>
+Perhaps the most important statement is the if-then statement.  These can divert 
+the flow of your program based on a condition.
+
+The basic syntax is:
+
+if condition then action
+
+"action" can be a statement, label or linenumber if you prefer.  If the condition is true, then 
+the statement will be executed.  Specifying a linenumber or label will jump there if the condition is true.
+
+Note that in specific cases, assembly of if-then statements with a linenumber or label as the target 
+will fail.  If this happens, DASM will report a "branch out of range."  One way to fix this is to 
+change the offending if-then statement to if-then goto, or you can let the compiler fix the problem for 
+you by turning smart branching on.
+
+TO do this, specify the following:
+
+ rem smartbranching on
+
+somewhere near the beginning of your program.  Be aware that turning smartbranching on will 
+slightly obfuscate the generated assembly file, so do not use it if you plan to examine the assembly 
+later to see how it works.
+
+In Batari Basic, there are three types of if-then statements.  The first is a simple
+check where the condition is a single statement.
+
+for example:
+
+if a then 20
+
+will divert program flow to line 20 if a is anything except zero.
+
+This type of if-then statement is more often used for checking the state of various 
+read registers.  For example, the joysticks, console switches and hardware collisions 
+are all checked this way (they can't be read any other way.)
+
+For example:
+
+if joy0up then x=x+1
+
+will add 1 to x if the left joystick is pushed up.
+
+if switchreset then 200
+
+will jump to line 200 if the reset switch on the console is set.
+
+if collision(player1,playfield) then t=1
+
+will set t to 1 if player1 collides with the playfield.
+
+A second type of statement includes a simple comparison.  Valid comparisons are =, <, 
+>, and <>.  Note that there is no <= or >=, but these can be simulated...see below.
+
+Examples:
+
+if a<2 then 50
+if f=g then f=f+1
+if r<>e then r=e
+
+Why no <= or >=?  Well, they aren't needed.  For example, switching the order of the 
+comparison will give you the same thing.
+
+For example:
+
+if a > d then 200
+
+is exactly the same as
+
+if d<=a then 200
+
+It takes a little getting used to, but once you understand, it makes sense.
+
+The third type of if-then is a complex of compound statement, that is, one containing a 
+boolean && (AND) or || (OR) operator.  You are allowed one boolean per if-then.
+
+For example:
+
+if x<10 && x>2 then b=b-1
+if !joy0up && gameover=0 then 200
+if x=5 || x=6 then x=x-4
+
+
+<font size=+3><a name="ind">indexing</a></font>
+See "arrays" and "data statement"
+
+<font size=+3><a name="inl">inline assembly</a></font>
+see "asm keyword."
+
+<font size=+3><a name="joy">Joysticks</a></font>
+Joysticks are read by using an if-then statement.  There are four directional functions 
+and one fire function per joystick:
+
+joy0up - true if left joystick is pushed up
+joy0down - true if left joystick is pushed down
+joy0left - true if left joystick is pushed left
+joy0right - true if left joystick is pushed right
+joy0fire - true if left joystick's fire button is pushed
+
+joy1up - true if right joystick is pushed up
+joy1down - true if right joystick is pushed down
+joy1left - true if right joystick is pushed left
+joy1right - true if right joystick is pushed right
+joy1fire - true if right joystick's fire button is pushed
+
+Example:
+
+if joy0up then x=x+1
+
+These can also be inverted using the NOT (!) token, e.g.:
+
+if !joyup then 230
+
+<font size=+3><a name="ker">kernel</a></font>
+See "drawscreen" for more information about the display kernel in Batari Basic.
+
+<font size=+3><a name="lab">labels</a></font>
+Batari Basic supports alphanumeric labels.  You may use linenumbers if you prefer.  In 
+any case, labels and linenumber are optional.  Typically you will only need them when 
+you want to specify a goto or gosub target.
+
+Labels must not be indented, and all program statements must be.  You may use labels 
+with or without program statements after them.
+
+Example:
+
+10 pfpixel 2 3 on
+20 drawscreen
+ player0x=player0x+1:goto mylocation 
+ player0y=29:goto mylocation2
+mylocation
+ x=x+1
+mylocation2 x=x-1
+
+<font size=+3><a name="let">let statement</a></font>
+The let statement is optional, and is used for variable assignment.  It was left in 
+because an early unreleased version of Batari Basic required it.  If you wish to use 
+it, it will not affect program length - it will simply be ignored by the compiler.
+
+example:
+let x=x+1
+
+<font size=+3><a name="lin">linenumbers</a></font>
+linenumbers are optional.  Some old-school programmers like them, or at least use them 
+as a matter of comfort since they were necessary in early Basics.  Batari Basic does 
+not require linenumbers at all, instead you can use alphanumeric labels in their place.
+
+<font size=+3><a name="loo">loops</a></font>
+A common form of a loop is a for-next loop, but a loop in general is any program that 
+repeats.  In this sense, all Batari Basic programs must be loops, in that the programs 
+never exit.
+
+In Batari Basic, you should limit your use of loops that do not include the drawscreen 
+function somewhere.  Too many loops take time which is somewhat limited.  See 
+"drawscreen" for more information.
+
+<font size=+3><a name="mem">memory</a></font>
+In Batari Basic, you are currently limited to about 3k of program space in a 4k ROM.  
+1k of this is used for the display kernel and other support routines.
+
+The Atari 2600 also only has 128 bytes of RAM.  Of this RAM, 26 bytes are available for 
+general use in your programs, as variables a-z.
+
+<font size=+3><a name="mis">missiles</a></font>
+Batari Basic can display two missiles on the screen.  These are simply vertical lines 
+of a height you specify, and at coordinates you specify.  The missiles are the same 
+color as their respective players.
+
+To access missiles, you can set missile0x, missile0y, and missile0height for missile 0, 
+and missile1x, missile1y, and missile1height for missile 1.
+
+There are more things you can do with missiles by modifying the TIA registers.  See 
+"TIA registers" for more information.
+
+<font size=+3><a name="mul">multiplication</a></font>
+Multiplication in Batari Basic is limited to divides by 2.  If you try to
+specify a multiplicand other than 2, it will be ignored and will compile a multiplication 
+by 2 anyway.  This may be updated in later versions to include multiplication by any 
+number. 
+
+
+<font size=+3><a name="neg">negative numbers</a></font>
+Negative numbers are somewhat supported by Batari Basic.  Although variable values can 
+contain 0-255, the numbers will wrap if 255 is exceeded.  Therefore, one can think of 
+numbers from 128-255 as being functionally equal to -128 to -1.  This is called "two's 
+compliment" form because the high bit is set from 128-255, so this high bit can also be 
+called the "sign."
+
+In other words, adding 255 to a variable has exactly the same effect as subtracting 1.
+
+
+
+<font size=+3><a name="nex">next keyword</a></font>
+the next keyword will find the nearest "for" and jump back there.  Note that if any 
+variable is specified after a next, it will be ignored.
+
+It is also important to note that the "next" doesn't care about the program flow - it 
+will instead find the nearest for based on distance.
+
+For example:
+
+ for x=1 to 20
+ goto 100
+ for g=2 to 49
+100 next
+
+The "next" above WILL NOT jump back to the first for, instead it will jump to the 
+nearest one, even if this statement has never been executed.  Therefore, you should be 
+very careful when using next.
+
+<font size=+3><a name="on">on ... goto statement</a></font>
+on ... goto statement
+This works similar to a case statement in other languages.  It is useful for replacing 
+multiple if-then statements when conditions happen in an ordinal fashion.
+
+FOr example:
+
+on x goto 100 200 300 400
+
+is the same as:
+if x=0 then 100
+if x=1 then 200
+if x=2 then 300
+if x=3 then 400
+
+You may specify up to 127 targets on an on...goto.
+
+Also, note that there is no checking to see if x exceeds the number of targets.  The 
+targets are stored in a table, so the above example, if x=4, the target will be read 
+from memory beyond the end of the table and you program will jump to an unknown place 
+and probably crash.
+
+<font size=+3><a name="pfh">pfhline statement </a></font>
+This draws a horizontal line with playfield blocks.
+The syntax is:
+pfhline xpos ypos endxpos function
+
+xpos can be 0-31, ypos can be 0-11 (11 is hidden off of the screen and only seen if 
+scrolled.)
+
+endxpos should be greater than xpos or the command will not work properly, and strange 
+things may happen.
+
+function is any of on, off, or flip.  on turns the block on, off turns it off, and flip 
+turns it off if it was on or on if it was off.
+
+Note that there is no checking if the bounds of the function are exceeded.  If you do 
+so, strange things may happen, including crashing your program.
+
+<font size=+3><a name="pfp">pfpixel statement </a></font>
+This draws a single pixel with playfield blocks.
+The syntax is:
+pfpixel xpos ypos function
+
+xpos can be 0-31, ypos can be 0-11 (11 is hidden off of the screen and only seen if 
+scrolled.)
+
+function is any of on, off, or flip.  on turns the block on, off turns it off, and flip 
+turns it off if it was on or on if it was off.
+
+Note that there is no checking if the bounds of the function are exceeded.  If you do 
+so, strange things may happen, including crashing your program.
+
+
+<font size=+3><a name="pfs">pfscroll command</a></font>
+This command scrolls the playfield.  It is useful for a moving background or other 
+purposes.
+
+valid values are:
+
+pfscroll left
+pfscroll right
+pfscroll up
+pfscroll down
+
+Using pfscroll left or right will use quite a few processor cycles every frame, so use 
+it sparingly.  using pfscroll up or down uses lots of processor cycles only every 8th 
+time it is called.
+
+When using pfscroll up or down, the hidden blocks at y position 11 are useful.  
+Although these blocks are never seen, they are "scrolled in" to the visible screen by 
+the commands.  This invisible area can therefore be used to simulate a changing 
+background, instead of showing the same background over and over again.
+
+Note that if you are not using pfscroll in your program, you can use these hidden 4 blocks 
+as general variable storage.  Be careful you don't overwrite them with wayward 
+playfield commands!
+
+To use these extra bytes, one way is with DIM:
+
+dim var1=playfield+44
+dim var2=playfield+45
+dim var3=playfield+46
+dim var4=playfield+47
+
+Again, if you choose to do the above, be careful!
+<font size=+3><a name="pfv">pfvline statement  </a></font>
+This draws a vertical line with playfield blocks.
+The syntax is:
+pfhline xpos ypos endypos function
+
+xpos can be 0-31, ypos can be 0-11 (11 is hidden off of the screen and only seen if 
+scrolled.)
+
+endypos should be greater than ypos or the command will not work properly, and strange 
+things may happen.
+
+function is any of on, off, or flip.  on turns the block on, off turns it off, and flip 
+turns it off if it was on or on if it was off.
+
+Note that there is no checking if the bounds of the function are exceeded.  If you do 
+so, strange things may happen, including crashing your program.
+
+<font size=+3><a name="pla">player graphics   </a></font>
+The Atari 2600 can display two player sprites, which are 8 pixels wide and any height.  
+In Batari Basic, you access these sprites by using various reserved values and 
+commands.  To define a sprite, you use player0: and player1:
+
+For example:
+
+ player0:
+ %00100010
+ %01110111
+ %01111111
+end
+
+This will define a player0 sprite which is 3 blocks in height.
+
+To display the objects, you must first set the colors with COLUP0 and COLUP1.  They are 
+black by default, which will not display against a black background.
+
+To set the coordinates, you set player0x, player0y, player1x, or player1y.  On the 
+screen, player0x and player1x values between 0 and around 164 are useful.  You can specify 
+numbers larger than 164 but you may see some jumping at the edges of the screen.  
+values of player0y and player1y between 0 and about 88 are useful. Others will simply 
+cause the player to move off of the screen.
+
+<font size=+3><a name="plaf">playfield</a></font>In Batari Basic, you get a 32x12 bitmapped, asymmetric
+playfield.  This takes the full vertical length of the screen, except for the area reserved for the score,
+but takes only the center 80% of the screen due to timing constraints.  You may use the left or right 10% of
+the screen, but you can only draw vertical lines there, and they take the full length of the screen.  For
+example, you can put a vertical border around the drawable portion of the playfield by PF0=128. 
+
+Please see pfpixel, pfvline, pfhline, and pfscroll for more information about drawing 
+to the playfield.
+
+<font size=+3><a name="ran">rand function</a></font>
+The rand function returns a random number between 1 and 255 every time it is called.  
+You typically call this function by something line this:
+
+a=rand
+
+However, you can also use it in an if-then statement:
+
+if rand<32 then r=r+1
+
+You can also assign the value of rand to something else, at least until it is accessed
+again.  The only reason you would ever want to do this is to seed the randomizer.  If
+you do this, pay careful attention to the value you store there, since storing a zero in
+rand will "break" it such that all subsequent reads will also be zero! 
+
+<font size=+3><a name="rem">rem statement</a></font>
+The rem statement is used for in-program comments.  These comments are very helpful not 
+only to other programmers trying to make sense of your code, but to yourself if your 
+memory is anything like mine :)
+
+Note that, unlike old interpreted Basics, you can use rem as much as you want and it will 
+not affect the length of your compiled program.
+
+<font size=+3><a name="ret">return statement</a></font>
+The return statement is used in a subroutine to return to the part of the program 
+right after a gosub which called the subroutine.
+
+Be careful when using return, as if a running program encounters one without a gosub 
+that called it, the program will crash or strange things may happen.
+
+<font size=+3><a name="sco">score keyword</a></font>
+The score keyword is used to change the score.  The score is fixed at 6 digits, and it 
+currently resides permanently at the bottom of the screen.  Unlike other variables, 
+Batari Basic accepts values from 0-999999 when dealing with the score.
+
+Before the score will appear, you should set its color.  Use scorecolor = value, where value is 0 to 255.
+
+To change the score, some examples of valid operations are:
+
+score=1000
+score=score+2000
+score=score-10
+score=score+a
+
+Be careful when using the last one.  It will compile, but upon execution, "a" must always 
+be a BCD compliant number.  If a non-BCD number is in "a," part of your score may end up 
+garbled.
+
+What is a BCD number?  BCD stands for Binary-coded decimal.  In essence, it is a 
+hexadecimal number represented as a decimal number.
+
+For instance, $99 is the BCD number for decimal 99.  $23 is the BCD number for decimal 
+23.  There is no BCD number for $3E, for instance, since it contains a non-decimal 
+value (the E.)  For example, if "a" contained $3E, your score could end up garbled.
+
+<font size=+3><a name="sou">sound   </a></font>
+There is no abtraction for sound in Batari Basic.  However, you can make sounds by 
+accessing the TIA registers directly.  Don't panic, the TIA registers for sound are 
+quite friendly, at least as far as that damn TIA goes.
+
+The following TIA regs are useful for sound:
+
+AUDV0 : channel 0 volume: valid values 0-15
+AUDC0 : channel 0 channel: valid values 0-15 
+AUDF0 : channel 0 frequency: valid values 0-31
+AUDV1 : channel 1 volume: valid values 0-15
+AUDC1 : channel 1 channel: valid values 0-15 
+AUDF1 : channel 1 frequency: valid values 0-31
+
+setting the values, for instance, by AUDV0=10:AUDC0=12:AUDF0=4 will produce a tone, and 
+it will stay on until you set AUDV0=0.  typically, a frame counter is set up that keeps 
+sounds on for a specified number of frames (which occur 60 times a second.)
+
+<font size=+3><a name="spr">sprites</a></font>
+See player graphics.
+
+<font size=+3><a name="sub">subtraction</a></font>
+The '-' operator is used for subtraction.  For most vaiables and registers, Batari Basic 
+supports simple expressions only, and accepts any combination of registers, 
+variables, unsigned values from 0-255 or signed values from -128 to 127 (see also 
+"negative numbers.")
+
+In the event that the subtraction causes the result to be less than 0, it 
+will be wrapped around to 255.  For instance, 0-1=255, 1-2=255, ... 0-255=1.
+
+An exception is the score, which can work with values from 0 - 999999.
+
+Examples:
+
+a=a-1
+COLUPF=r-$5F
+player0y=player1y-6
+
+
+<font size=+3><a name="TIA">TIA registers</a></font>
+There are a few TIA registers that may be useful in Batari Basic.  This is not a 
+complete list.  I'm only mentioning the registers and functions therein that you will most 
+likely find useful.
+
+Registers: NUSIZ0, NUSIZ1
+Function: changes the size and/or other properties of player0/1 and missile0/1.
+Value:         		  	effect:
+$0x (x means don't care)	missile = 1 pixel wide		
+$1x				missile = 2 pixels wide
+$1x				missile = 4 pixels wide
+$1x				missile = 8 pixels wide
+$x0				one copy of player
+$x1				two close copies of player
+$x2				two medium copies of player
+$x3				three close copies of player
+$x4				two wide copies of player
+$x5				double-sized player
+$x6				three meduim copies of player
+$x7				quad-sized player
+
+Note that missile and player properties may be combined in a single write.
+
+Example: NUSIZ0=$13 will make missile0 8 wide, plus make three close copies of player0.
+
+
+Register: CTRLPF
+Function: Changes properties of the playfield and/or ball
+Value:				effect:
+$0x (x means don't care)	ball = 1 pixel wide		
+$1x				ball = 2 pixels wide
+$1x				ball = 4 pixels wide
+$1x				ball = 8 pixels wide
+
+$x1 				None of the below
+$x3				left half of playfield gets color of player0, and
+				right half gets color of player1
+$x5				players move behind playfield
+$x7				Both of the above
+
+Note that ball and playfield properties may be combined in a single write.
+
+Registers: REFP0, REFP1
+Function: reflects player sprites
+Value:
+0				Do not reflect
+8				Reflect
+
+This is useful for asymmetic sprites so that they can give the appearance of changing 
+direction without needing to redefine their graphics.
+
+Register: PF0
+Function: Set or clear the left and right 10% of the playfield
+Value:
+128-255				Set vertical lines covering entire height of playfield
+
+PF0 is useful for creating a border in Batari Basic.  In other kernels or in assembly, 
+it has other uses.
+
+Registers: AUDC0, AUDC1, AUDF0, AUDF1, AUDV0, AUDV1
+Function: Sound
+See "sound" for more information about these.
+
+
+<font size=+3><a name="tim">timing</a></font>
+timing
+Timing is crucial in Batari Basic, in that you only have about 2 milliseconds between 
+successive calls to drawscreen.  See drawscreen for more information.
+
+<font size=+3><a name="var">variables</a></font>
+In Batari Basic, you have 26 general purpose variables, fixed as a-z.  Although they 
+are fixed, you can use the dim command to map an alias to any of these variables.
+
+26 variables in not a lot, so you will use them up quickly.  Therefore, it's 
+recommended that you use the bit operations to access single bits when using variables 
+for flags or game state information wherever possible.
+
+If you do run out of variables, you can use four bytes from the playfield if you're not 
+scrolling it.  You can also use temp1-temp6 as temporary storage, but these are 
+obliterated when drawscreen is run, and some are used for playfield operations as well, 
+so use these at your own risk.
+
+Although there might be unused bytes in the stack space, it is not recommended that you 
+use these in your program since later versions of Batari Basic will probably use these 
+for something else.
+
+<font size=+3><a name="whi">whitespace</a></font>
+Batari Basic Alpha 0.1 was very picky about whitespace.  These problems are pretty much 
+nonexistent in Alpha 0.2.  As long as you don't try anything totally goofy, chances are 
+your code will be parsed correctly by the compiler.  If you can read it easily, it's likely
+that the compiler can too.
+
+For example, suppose you want to do "for l = 1 to 10 : t = t + 4 : next"
+
+in Alpha 0.2, the following would be parsed correctly:
+for l=1 to 10:t=t+4:next
+for            l            =1                  to 10:t=t    +4: next
+for l=1  to 10 : t= t+4 :next
+
+the following would not:
+forl=1to10:t=t+4:next
+forl=1 to 10:t=t+4:next
+for l=1 to10 :t=t+4:next
+
+In other words, any keywords or commands must be spaced properly or Batari Basic will
+think they are variables and compilation will fail, but anything else is fair game.  As
+long as there is a recognizable separator, such as +,-,=,:,*,/,&,&&,|,||,^ and possibly
+others, you can space however you want (or not at all.)
+
+</pre></html>

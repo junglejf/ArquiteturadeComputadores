@@ -1,0 +1,462 @@
+------- FILE T1.asm LEVEL 1 PASS 2
+      1  10002 ????						;===============================================================================
+      2  10002 ????						; T2 - MSprite
+      3  10002 ????						;===============================================================================
+      4  10002 ????
+      5  10002 ????						; Program: T2 - MSprite
+      6  10002 ????						; Autores:   Jorge Felipe Campos Chagas, Gabriel , Henrique
+      7  10002 ????						; Programa que mostra quadrado no centro da tela e aceita as entradas do joystick
+      8  10002 ????
+      9  10002 ????
+     10  10002 ????						;===============================================================================
+     11  10002 ????						; Inicializando o Dasm
+     12  10002 ????						;===============================================================================
+     13  10002 ????
+     14  10002 ????				       PROCESSOR	6502
+     15  10002 ????
+     16  10002 ????						; vcs.h para usar a TIA e os registradores
+------- FILE vcs.h LEVEL 2 PASS 2
+      0  10002 ????				       include	vcs.h
+      1  10002 ????						; VCS.H
+      2  10002 ????						; Version 1.05, 13/November/2003
+      3  10002 ????
+      4  10002 ????		00 69	    VERSION_VCS =	105
+      5  10002 ????
+      6  10002 ????						; THIS IS A PRELIMINARY RELEASE OF *THE* "STANDARD" VCS.H
+      7  10002 ????						; THIS FILE IS EXPLICITLY SUPPORTED AS A DASM-PREFERRED COMPANION FILE
+      8  10002 ????						; PLEASE DO *NOT* REDISTRIBUTE THIS FILE!
+      9  10002 ????						;
+     10  10002 ????						; This file defines hardware registers and memory mapping for the
+     11  10002 ????						; Atari 2600. It is distributed as a companion machine-specific support package
+     12  10002 ????						; for the DASM compiler. Updates to this file, DASM, and associated tools are
+     13  10002 ????						; available at at http://www.atari2600.org/dasm
+     14  10002 ????						;
+     15  10002 ????						; Many thanks to the original author(s) of this file, and to everyone who has
+     16  10002 ????						; contributed to understanding the Atari 2600.  If you take issue with the
+     17  10002 ????						; contents, or naming of registers, please write to me (atari2600@taswegian.com)
+     18  10002 ????						; with your views.  Please contribute, if you think you can improve this
+     19  10002 ????						; file!
+     20  10002 ????						;
+     21  10002 ????						; Latest Revisions...
+     22  10002 ????						; 1.05  13/NOV/2003	  - Correction to 1.04 - now functions as requested by MR.
+     23  10002 ????						;			  - Added VERSION_VCS equate (which will reflect 100x version #)
+     24  10002 ????						;			    This will allow conditional code to verify VCS.H being
+     25  10002 ????						;			    used for code assembly.
+     26  10002 ????						; 1.04  12/NOV/2003	 Added TIA_BASE_WRITE_ADDRESS and TIA_BASE_READ_ADDRESS for
+     27  10002 ????						;			 convenient disassembly/reassembly compatibility for hardware
+     28  10002 ????						;			 mirrored reading/writing differences.	This is more a
+     29  10002 ????						;			 readability issue, and binary compatibility with disassembled
+     30  10002 ????						;			 and reassembled sources.  Per Manuel Rotschkar's suggestion.
+     31  10002 ????						; 1.03  12/MAY/2003	 Added SEG segment at end of file to fix old-code compatibility
+     32  10002 ????						;			 which was broken by the use of segments in this file, as
+     33  10002 ????						;			 reported by Manuel Polik on [stella] 11/MAY/2003
+     34  10002 ????						; 1.02  22/MAR/2003	 Added TIMINT($285)
+     35  10002 ????						; 1.01				Constant offset added to allow use for 3F-style bankswitching
+     36  10002 ????						;						 - define TIA_BASE_ADDRESS as $40 for Tigervision carts, otherwise
+     37  10002 ????						;						   it is safe to leave it undefined, and the base address will
+     38  10002 ????						;						   be set to 0.  Thanks to Eckhard Stolberg for the suggestion.
+     39  10002 ????						;			    Note, may use -DLABEL=EXPRESSION to define TIA_BASE_ADDRESS
+     40  10002 ????						;			  - register definitions are now generated through assignment
+     41  10002 ????						;			    in uninitialised segments.	This allows a changeable base
+     42  10002 ????						;			    address architecture.
+     43  10002 ????						; 1.0	22/MAR/2003		Initial release
+     44  10002 ????
+     45  10002 ????
+     46  10002 ????						;-------------------------------------------------------------------------------
+     47  10002 ????
+     48  10002 ????						; TIA_BASE_ADDRESS
+     49  10002 ????						; The TIA_BASE_ADDRESS defines the base address of access to TIA registers.
+     50  10002 ????						; Normally 0, the base address should (externally, before including this file)
+     51  10002 ????						; be set to $40 when creating 3F-bankswitched (and other?) cartridges.
+     52  10002 ????						; The reason is that this bankswitching scheme treats any access to locations
+     53  10002 ????						; < $40 as a bankswitch.
+     54  10002 ????
+     55  10002 ????			   -	       IFNCONST	TIA_BASE_ADDRESS
+     56  10002 ????			   -TIA_BASE_ADDRESS =	0
+     57  10002 ????				       ENDIF
+     58  10002 ????
+     59  10002 ????						; Note: The address may be defined on the command-line using the -D switch, eg:
+     60  10002 ????						; dasm.exe code.asm -DTIA_BASE_ADDRESS=$40 -f3 -v5 -ocode.bin
+     61  10002 ????						; *OR* by declaring the label before including this file, eg:
+     62  10002 ????						; TIA_BASE_ADDRESS = $40
+     63  10002 ????						;   include "vcs.h"
+     64  10002 ????
+     65  10002 ????						; Alternate read/write address capability - allows for some disassembly compatibility
+     66  10002 ????						; usage ; to allow reassembly to binary perfect copies).  This is essentially catering
+     67  10002 ????						; for the mirrored ROM hardware registers.
+     68  10002 ????
+     69  10002 ????						; Usage: As per above, define the TIA_BASE_READ_ADDRESS and/or TIA_BASE_WRITE_ADDRESS
+     70  10002 ????						; using the -D command-line switch, as required.  If the addresses are not defined,
+     71  10002 ????						; they defaut to the TIA_BASE_ADDRESS.
+     72  10002 ????
+     73  10002 ????			   -	       IFNCONST	TIA_BASE_READ_ADDRESS
+     74  10002 ????			   -TIA_BASE_READ_ADDRESS =	TIA_BASE_ADDRESS
+     75  10002 ????				       ENDIF
+     76  10002 ????
+     77  10002 ????			   -	       IFNCONST	TIA_BASE_WRITE_ADDRESS
+     78  10002 ????			   -TIA_BASE_WRITE_ADDRESS =	TIA_BASE_ADDRESS
+     79  10002 ????				       ENDIF
+     80  10002 ????
+     81  10002 ????						;-------------------------------------------------------------------------------
+     82  10002 ????
+     83 U002d ????				      SEG.U	TIA_REGISTERS_WRITE
+     84 U0000					      ORG	TIA_BASE_WRITE_ADDRESS
+     85 U0000
+     86 U0000							; DO NOT CHANGE THE RELATIVE ORDERING OF REGISTERS!
+     87 U0000
+     88 U0000		       00	   VSYNC      ds	1	; $00	 0000 00x0   Vertical Sync Set-Clear
+     89 U0001		       00	   VBLANK     ds	1	; $01	 xx00 00x0   Vertical Blank Set-Clear
+     90 U0002		       00	   WSYNC      ds	1	; $02	 ---- ----   Wait for Horizontal Blank
+     91 U0003		       00	   RSYNC      ds	1	; $03	 ---- ----   Reset Horizontal Sync Counter
+     92 U0004		       00	   NUSIZ0     ds	1	; $04	 00xx 0xxx   Number-Size player/missle 0
+     93 U0005		       00	   NUSIZ1     ds	1	; $05	 00xx 0xxx   Number-Size player/missle 1
+     94 U0006		       00	   COLUP0     ds	1	; $06	 xxxx xxx0   Color-Luminance Player 0
+     95 U0007		       00	   COLUP1     ds	1	; $07	 xxxx xxx0   Color-Luminance Player 1
+     96 U0008		       00	   COLUPF     ds	1	; $08	 xxxx xxx0   Color-Luminance Playfield
+     97 U0009		       00	   COLUBK     ds	1	; $09	 xxxx xxx0   Color-Luminance Background
+     98 U000a		       00	   CTRLPF     ds	1	; $0A	 00xx 0xxx   Control Playfield, Ball, Collisions
+     99 U000b		       00	   REFP0      ds	1	; $0B	 0000 x000   Reflection Player 0
+    100 U000c		       00	   REFP1      ds	1	; $0C	 0000 x000   Reflection Player 1
+    101 U000d		       00	   PF0	      ds	1	; $0D	 xxxx 0000   Playfield Register Byte 0
+    102 U000e		       00	   PF1	      ds	1	; $0E	 xxxx xxxx   Playfield Register Byte 1
+    103 U000f		       00	   PF2	      ds	1	; $0F	 xxxx xxxx   Playfield Register Byte 2
+    104 U0010		       00	   RESP0      ds	1	; $10	 ---- ----   Reset Player 0
+    105 U0011		       00	   RESP1      ds	1	; $11	 ---- ----   Reset Player 1
+    106 U0012		       00	   RESM0      ds	1	; $12	 ---- ----   Reset Missle 0
+    107 U0013		       00	   RESM1      ds	1	; $13	 ---- ----   Reset Missle 1
+    108 U0014		       00	   RESBL      ds	1	; $14	 ---- ----   Reset Ball
+    109 U0015		       00	   AUDC0      ds	1	; $15	 0000 xxxx   Audio Control 0
+    110 U0016		       00	   AUDC1      ds	1	; $16	 0000 xxxx   Audio Control 1
+    111 U0017		       00	   AUDF0      ds	1	; $17	 000x xxxx   Audio Frequency 0
+    112 U0018		       00	   AUDF1      ds	1	; $18	 000x xxxx   Audio Frequency 1
+    113 U0019		       00	   AUDV0      ds	1	; $19	 0000 xxxx   Audio Volume 0
+    114 U001a		       00	   AUDV1      ds	1	; $1A	 0000 xxxx   Audio Volume 1
+    115 U001b		       00	   GRP0       ds	1	; $1B	 xxxx xxxx   Graphics Register Player 0
+    116 U001c		       00	   GRP1       ds	1	; $1C	 xxxx xxxx   Graphics Register Player 1
+    117 U001d		       00	   ENAM0      ds	1	; $1D	 0000 00x0   Graphics Enable Missle 0
+    118 U001e		       00	   ENAM1      ds	1	; $1E	 0000 00x0   Graphics Enable Missle 1
+    119 U001f		       00	   ENABL      ds	1	; $1F	 0000 00x0   Graphics Enable Ball
+    120 U0020		       00	   HMP0       ds	1	; $20	 xxxx 0000   Horizontal Motion Player 0
+    121 U0021		       00	   HMP1       ds	1	; $21	 xxxx 0000   Horizontal Motion Player 1
+    122 U0022		       00	   HMM0       ds	1	; $22	 xxxx 0000   Horizontal Motion Missle 0
+    123 U0023		       00	   HMM1       ds	1	; $23	 xxxx 0000   Horizontal Motion Missle 1
+    124 U0024		       00	   HMBL       ds	1	; $24	 xxxx 0000   Horizontal Motion Ball
+    125 U0025		       00	   VDELP0     ds	1	; $25	 0000 000x   Vertical Delay Player 0
+    126 U0026		       00	   VDELP1     ds	1	; $26	 0000 000x   Vertical Delay Player 1
+    127 U0027		       00	   VDELBL     ds	1	; $27	 0000 000x   Vertical Delay Ball
+    128 U0028		       00	   RESMP0     ds	1	; $28	 0000 00x0   Reset Missle 0 to Player 0
+    129 U0029		       00	   RESMP1     ds	1	; $29	 0000 00x0   Reset Missle 1 to Player 1
+    130 U002a		       00	   HMOVE      ds	1	; $2A	 ---- ----   Apply Horizontal Motion
+    131 U002b		       00	   HMCLR      ds	1	; $2B	 ---- ----   Clear Horizontal Move Registers
+    132 U002c		       00	   CXCLR      ds	1	; $2C	 ---- ----   Clear Collision Latches
+    133 U002d
+    134 U002d							;-------------------------------------------------------------------------------
+    135 U002d
+    136 U000e ????				      SEG.U	TIA_REGISTERS_READ
+    137 U0000					      ORG	TIA_BASE_READ_ADDRESS
+    138 U0000
+    139 U0000							;											bit 7	 bit 6
+    140 U0000		       00	   CXM0P      ds	1	; $00	     xx00 0000	     Read Collision  M0-P1   M0-P0
+    141 U0001		       00	   CXM1P      ds	1	; $01	     xx00 0000			     M1-P0   M1-P1
+    142 U0002		       00	   CXP0FB     ds	1	; $02	     xx00 0000			     P0-PF   P0-BL
+    143 U0003		       00	   CXP1FB     ds	1	; $03	     xx00 0000			     P1-PF   P1-BL
+    144 U0004		       00	   CXM0FB     ds	1	; $04	     xx00 0000			     M0-PF   M0-BL
+    145 U0005		       00	   CXM1FB     ds	1	; $05	     xx00 0000			     M1-PF   M1-BL
+    146 U0006		       00	   CXBLPF     ds	1	; $06	     x000 0000			     BL-PF   -----
+    147 U0007		       00	   CXPPMM     ds	1	; $07	     xx00 0000			     P0-P1   M0-M1
+    148 U0008		       00	   INPT0      ds	1	; $08	     x000 0000	     Read Pot Port 0
+    149 U0009		       00	   INPT1      ds	1	; $09	     x000 0000	     Read Pot Port 1
+    150 U000a		       00	   INPT2      ds	1	; $0A	     x000 0000	     Read Pot Port 2
+    151 U000b		       00	   INPT3      ds	1	; $0B	     x000 0000	     Read Pot Port 3
+    152 U000c		       00	   INPT4      ds	1	; $0C		x000 0000	 Read Input (Trigger) 0
+    153 U000d		       00	   INPT5      ds	1	; $0D		x000 0000	 Read Input (Trigger) 1
+    154 U000e
+    155 U000e							;-------------------------------------------------------------------------------
+    156 U000e
+    157 U0298 ????				      SEG.U	RIOT
+    158 U0280					      ORG	$280
+    159 U0280
+    160 U0280							; RIOT MEMORY MAP
+    161 U0280
+    162 U0280		       00	   SWCHA      ds	1	; $280      Port A data register for joysticks:
+    163 U0281							;			Bits 4-7 for player 1.  Bits 0-3 for player 2.
+    164 U0281
+    165 U0281		       00	   SWACNT     ds	1	; $281      Port A data direction register (DDR)
+    166 U0282		       00	   SWCHB      ds	1	; $282		Port B data (console switches)
+    167 U0283		       00	   SWBCNT     ds	1	; $283      Port B DDR
+    168 U0284		       00	   INTIM      ds	1	; $284		Timer output
+    169 U0285
+    170 U0285		       00	   TIMINT     ds	1	; $285
+    171 U0286
+    172 U0286							; Unused/undefined registers ($285-$294)
+    173 U0286
+    174 U0286		       00		      ds	1	; $286
+    175 U0287		       00		      ds	1	; $287
+    176 U0288		       00		      ds	1	; $288
+    177 U0289		       00		      ds	1	; $289
+    178 U028a		       00		      ds	1	; $28A
+    179 U028b		       00		      ds	1	; $28B
+    180 U028c		       00		      ds	1	; $28C
+    181 U028d		       00		      ds	1	; $28D
+    182 U028e		       00		      ds	1	; $28E
+    183 U028f		       00		      ds	1	; $28F
+    184 U0290		       00		      ds	1	; $290
+    185 U0291		       00		      ds	1	; $291
+    186 U0292		       00		      ds	1	; $292
+    187 U0293		       00		      ds	1	; $293
+    188 U0294
+    189 U0294		       00	   TIM1T      ds	1	; $294		set 1 clock interval
+    190 U0295		       00	   TIM8T      ds	1	; $295      set 8 clock interval
+    191 U0296		       00	   TIM64T     ds	1	; $296      set 64 clock interval
+    192 U0297		       00	   T1024T     ds	1	; $297      set 1024 clock interval
+    193 U0298
+    194 U0298							;-------------------------------------------------------------------------------
+    195 U0298							; The following required for back-compatibility with code which does not use
+    196 U0298							; segments.
+    197 U0298
+    198  0000 ????				      SEG
+    199  0000 ????
+    200  0000 ????						; EOF
+------- FILE T1.asm
+     18  0000 ????
+     19  0000 ????
+     20  0000 ????						;===============================================================================
+     21  0000 ????						; Início da RAM e separamos espaço pra possíveis variáveis - Cabeçalho
+     22  0000 ????						;===============================================================================
+     23  0000 ????
+     24  0000 ????						; define um espaço para as variáveis
+     25 U0080 ????				      SEG.U	VARS
+     26 U0080 ????
+     27 U0080 ????						; RAM scomeça no endereço $80
+     28 U0080					      ORG	$80
+     29 U0080							;===============================================================================
+     30 U0080							; Início do Catucho - Cabeçalho
+     31 U0080							;===============================================================================
+     32 U0080
+     33 U0080							; Cabeçalho
+     34  10002 ????				       SEG	CODE
+     35  10002 ????
+     36  10002 ????						; Recomenda-se que rom até 2k comece em $F800 e 4K $F000
+     37  f000					      ORG	$F000
+     38  f000							;Variáveis reservadas
+     39  f000		       00 80	   YPos       =	$80	; ; onde guardaremos a posição vertical do objeto
+     40  f000		       00 81	   Quadrado   =	$81	; variável do quadrado
+     41  f000							;
+     42  f000							;===============================================================================
+     43  f000							; Inicio do Jogo
+     44  f000							;===============================================================================
+     45  f000
+     46  f000				   Inicio
+     47  f000							;Limpa a RAM e os registradores da TIA e do processador
+     48  f000							;recomendação para todos os jogos e limpar a RAM
+     49  f000		       78		      sei		;desativa qualquer interrupção
+     50  f001		       d8		      cld		; limpa o bit de cáculo de BCD
+     51  f002
+     52  f002		       a2 00		      ldx	#0	; carrega x com 0
+     53  f004		       8a		      txa		; passa o valor de x para A
+     54  f005		       a8		      tay		; ||		|| de a para y
+     55  f006				   free
+     56  f006		       ca		      dex		; x = x -1
+     57  f007		       9a		      txs		; passa x para o Stack pointer
+     58  f008		       48		      pha		; da um push em A
+     59  f009		       d0 fb		      bne	free	; enquanto não for zero(tiver algo) ontinua o loop
+     60  f00b							;escolhemos trabalhar com o míssel 0
+     61  f00b		       a9 27		      lda	#39	; tamanho = 39  pg 40 manual stella
+     62  f00d		       85 04		      sta	NUSIZ0	; quadrado = tamanho
+     63  f00f		       85 09		      sta	COLUBK	; background = cor#39 marrom claro
+     64  f011
+     65  f011		       a9 63		      lda	#99	; posicão inicial 192/2 = 96 + 4 pixels = 100 -1 index (começa conta de 0) = 99
+     66  f013		       85 80		      sta	YPos	;Posição inicial no eixo y(vertical)
+     67  f015		       85 06		      sta	COLUP0
+     68  f017
+     69  f017							;;;calcular a posiçao inicial no eixo x(horizontal)
+     70  f017		       a9 4f		      lda	#79	; posicão inicial 160/2 = 80 - 1 index = 79
+     71  f019		       38		      sec		; limpa o carry
+     72  f01a		       85 02		      sta	WSYNC	; espera o inicio da linha
+     73  f01c							;;asl shiftleft bit, ajuda a "empurrar o quadrado para direita
+     74  f01c				   DivideLoop
+     75  f01c		       e9 0f		      sbc	#15	;2
+     76  f01e		       b0 fc		      bcs	DivideLoop	;4/5	 4/ 9.../54 pg 8 manual 15  colour clock interval
+     77  f020		       49 07		      eor	#7	;+6/11... 01 10
+     78  f022		       0a		      asl		;8
+     79  f023		       0a		      asl		;10
+     80  f024		       0a		      asl		;12
+     81  f025		       0a		      asl		;14/19.../64
+     82  f026		       9d 22 00 	      sta.wx	HMM0,X	;19/24.../69
+     83  f029		       95 12		      sta	RESM0,X	;23 precisamos chegar no ciclo 23 ou + para podermos setar
+     84  f02b		       85 02		      sta	WSYNC	;necessário antes do HMOVE
+     85  f02d		       85 2a		      sta	HMOVE	;movimentação horizontal tem q ter ciclo 24> aqui pg 9 manual stella
+     86  f02f							;Obs.: bug de 8 bits referente a este HMOVE ^^^^^^^^ que da o tracinho preto na tela superior esquerda
+     87  f02f
+     88  f02f
+     89  f02f							;===============================================================================
+     90  f02f							; Estrutura do Programa Principal
+     91  f02f							;===============================================================================
+     92  f02f
+     93  f02f				   Main
+     94  f02f							;1 - VerticalSync
+     95  f02f							;2 - VerticalBlank
+     96  f02f							;3 - Joystick
+     97  f02f							;4 - Núcleo
+     98  f02f							;5 - OverScan
+     99  f02f							;5.1 - voltemos ao Main
+    100  f02f							;6 - Fim do cartucho
+    101  f02f
+    102  f02f
+    103  f02f							;===============================================================================
+    104  f02f							; 1 - Vertical Sync
+    105  f02f							; -------------
+    106  f02f							; Aqui geramos o sinal que orienta a TV a mover o canhão para o topo da tela para
+    107  f02f							; podermos ir mandando os frames. O sinal VSync precisa ser de 3 linha como
+    108  f02f							; explicamos no trabalho
+    109  f02f							;===============================================================================
+    110  f02f
+    111  f02f							;VerticalSync:
+    112  f02f
+    113  f02f		       a9 02		      lda	#2	; Carrega o acumulador com 2 para podermos setar D1 = 1 no sta da linha 86
+    114  f031		       85 00		      sta	VSYNC	; acumulador D1 = 1 e liga o sinal do vertical Sync
+    115  f033		       85 02		      sta	WSYNC	; espera por SYNC para ir até o fim da 1ª linha
+    116  f035		       85 02		      sta	WSYNC	; espera por SYNC para ir até o fim da 2ª linha
+    117  f037		       85 02		      sta	WSYNC	; espera por SYNC para ir até o fim da 3ª linha
+    118  f039		       a9 00		      lda	#0	; carrega o acumulador com 0 então poderemos setar D1 = 0 no sta da linha 91
+    119  f03b		       85 00		      sta	VSYNC	; acumulador d1 = 0 e desliga o sinal vsync
+    120  f03d
+    121  f03d							;===============================================================================
+    122  f03d							; 2 - Vertical Blank
+    123  f03d							; --------------
+    124  f03d							; Pularemos 37 linhas do vblank
+    125  f03d							;===============================================================================
+    126  f03d
+    127  f03d		       a2 24		      ldx	#36	; x = 36, já temos uma linha da nossa inicialição da Pos Horizontal
+    128  f03f				   vbLoop
+    129  f03f		       85 02		      sta	WSYNC	; espera  ir até o fim da linha
+    130  f041		       ca		      dex		; x = x -1
+    131  f042		       d0 fb		      bne	vbLoop	; volta a VbLoop se x > 0
+    132  f044
+    133  f044
+    134  f044							;===============================================================================
+    135  f044							; 3 - Joystick
+    136  f044							; --------------
+    137  f044							; Aqui captaremos os comandos do Joystic para movimentar o quadrado
+    138  f044							;===============================================================================
+    139  f044							;Primeiro pra cima e pra baixo
+    140  f044							;SWCHA = |1|1|1|1|1|1|1|1| = "repouso"
+    141  f044							;quando capta um movimento SWCHA fica com 0 no bit do movimento:(Exemplo Joystick1)
+    142  f044							;SWCHA = |1|1|1|0|1|1|1|1| = pra cima 16
+    143  f044							;SWCHA = |1|1|0|1|1|1|1|1| = pra baixo 32
+    144  f044							;SWCHA = |1|0|1|1|1|1|1|1| = esquerda 64
+    145  f044							;SWCHA = |0|1|1|1|1|1|1|1| = direita 128
+    146  f044		       a9 10		      lda	#16	; a = 16
+    147  f046		       2c 80 02 	      bit	SWCHA	; faz um and lógico com o registrador A e SWCHA pega o bit de entrada
+    148  f049		       d0 04		      bne	testaBaixo	; se for diferente de zero
+    149  f04b		       e6 80		      inc	YPos	;
+    150  f04d		       e6 80		      inc	YPos	; 2 inc para regular a velocidade
+    151  f04f				   testaBaixo
+    152  f04f
+    153  f04f		       a9 20		      lda	#32	;a = 32
+    154  f051		       2c 80 02 	      bit	SWCHA	; faz um and lógico com o registrador A e SWCHA pega o bit de entrada
+    155  f054		       d0 04		      bne	testaEsquerda	; testa o próximo se >0
+    156  f056		       c6 80		      dec	YPos	;
+    157  f058		       c6 80		      dec	YPos	; 2 dec para regular a velocidade
+    158  f05a				   testaEsquerda
+    159  f05a							;aqui usaremos reg X
+    160  f05a		       a2 00		      ldx	#0	; x = 0
+    161  f05c		       a9 40		      lda	#64	; a = 64
+    162  f05e		       2c 80 02 	      bit	SWCHA	;faz um and lógico com o registrador A e SWCHA pega o bit de entrada
+    163  f061		       d0 02		      bne	testaDireita	; testa o próximo se >0
+    164  f063		       a2 1f		      ldx	#%00011111	;+1 nos 4 primeiros bits esquerda ; pg 41 manual do stella D7 D6 D5 D4
+    165  f065							;4 primeiros bits do registrador
+    166  f065							;pg 41 manual do stella
+    167  f065							;D7 D6 D5 D4
+    168  f065							;0 1 1 1 +7
+    169  f065							;0 1 1 0 +6
+    170  f065							;0 1 0 1 +5 Move left
+    171  f065							;0 1 0 0 +4 indicated number	   +7 vmax -8	  1 & -1 vmin
+    172  f065							;0 0 1 1 +3 of clocks
+    173  f065							;0 0 1 0 +2
+    174  f065							;0 0 0 1 +1
+    175  f065							;0 0 0 0 0 No Motion
+    176  f065							;1 1 1 1 -1
+    177  f065							;1 1 1 0 -2
+    178  f065							;1 1 0 1 -3
+    179  f065							;1 1 0 0 -4 move right
+    180  f065							;1 0 1 1 -5 indicated number
+    181  f065							;1 0 1 0 -6 of clocks
+    182  f065							;1 0 0 1 -7
+    183  f065							;1 0 0 0 -8
+    184  f065				   testaDireita
+    185  f065
+    186  f065		       a9 80		      lda	#128	;a = 128
+    187  f067		       2c 80 02 	      bit	SWCHA	;faz um and lógico com o registrador A e SWCHA pega o bit de entrada
+    188  f06a		       d0 02		      bne	done	; vaa para done linha 198 se a flag de bit > 0
+    189  f06c		       a2 ff		      ldx	#%11111111	; -1 nos 4 primeiros bits direita
+    190  f06e				   done
+    191  f06e		       86 22		      stx	HMM0	;Enfim,  guarda o comando;
+    192  f070
+    193  f070							;===============================================================================
+    194  f070							; 4 - Núcleo
+    195  f070							; ------
+    196  f070							; Aqui é a parte onde desenhamos o nosso quadrado
+    197  f070							;===============================================================================
+    198  f070
+    199  f070		       a0 be		      ldy	#190	; y = 190
+    200  f072		       85 02		      sta	WSYNC	; espera fim da linha
+    201  f074		       85 01		      sta	VBLANK	; desliga vblank
+    202  f076		       85 02		      sta	WSYNC	; necessário antes de chamar HMOVE mover
+    203  f078		       85 2a		      sta	HMOVE	; executa comando se houver
+    204  f07a
+    205  f07a							; Desenhando a tela do jogo
+    206  f07a				   TelaPrincipal
+    207  f07a		       85 02		      sta	WSYNC
+    208  f07c				   QuadradoON
+    209  f07c		       c4 80		      cpy	YPos	; verifica se quadrado ta ativo
+    210  f07e		       d0 04		      bne	no	; pula pra linha 214
+    211  f080		       a9 08		      lda	#8	; a = 8
+    212  f082		       85 81		      sta	Quadrado	;atualiza quadrado
+    213  f084				   no
+    214  f084							;Ta fora da tela quadrado?
+    215  f084		       a9 00		      lda	#0	; a =0
+    216  f086		       85 1d		      sta	ENAM0	; atualiza enam0
+    217  f088
+    218  f088							;Voltou?Então pinta quadrado!
+    219  f088
+    220  f088		       a5 81		      lda	Quadrado	; atualiza quadrado
+    221  f08a		       f0 06		      beq	fim	; se flag =0 vai pra linha 227
+    222  f08c				   ligado
+    223  f08c		       a9 02		      lda	#2	; a =2
+    224  f08e		       85 1d		      sta	ENAM0	; atualiza enam0
+    225  f090		       c6 81		      dec	Quadrado	; diminui o valor da variável quadrado
+    226  f092				   fim
+    227  f092		       88		      dey		; y = y-1
+    228  f093		       d0 e5		      bne	TelaPrincipal	; se y> 0 continua o looping
+    229  f095
+    230  f095							;===============================================================================
+    231  f095							; 5 - Overscan
+    232  f095							; --------------
+    233  f095							;Aqui contamos as 30 linhas finais da tela
+    234  f095							;===============================================================================
+    235  f095
+    236  f095		       a9 02		      lda	#2	; a = 2 pra fazer D1 = 1;
+    237  f097		       85 02		      sta	WSYNC	; espera vsync para ir até o fim da linha, e garantir o fim da scanline
+    238  f099
+    239  f099		       85 01		      sta	VBLANK	; desliga a imagem e liga vblank
+    240  f09b
+    241  f09b		       a2 1e		      ldx	#30	; x = 30
+    242  f09d				   osLoop
+    243  f09d		       85 02		      sta	WSYNC	; espera vsync para ir até o fim da linha
+    244  f09f		       ca		      dex		; x = x -1
+    245  f0a0		       d0 fb		      bne	osLoop	; looping regressivo retornando para osLoop enquanto x != 0
+    246  f0a2							;===========================================================================
+    247  f0a2							; 5.1 - Retorna ao Main
+    248  f0a2							;===========================================================================
+    249  f0a2
+    250  f0a2		       4c 2f f0 	      jmp	Main	; Volta para o label Main >> linha 93 <<
+    251  f0a5
+    252  f0a5							;===============================================================================
+    253  f0a5							; 6 - Fim do Cartucho
+    254  f0a5							;===============================================================================
+    255  fffc					      ORG	$FFFC	; espaço para o endereço dos vetores de interrupçoes ( Reset o mais importante).
+    256  fffc		       00 f0		      .WORD.w	Inicio	; NMI
+    257  fffe		       00 f0		      .WORD.w	Inicio	; RESET
+    258  10000			00 f0		       .WORD.w	Inicio	; IRQ
+    259  10002

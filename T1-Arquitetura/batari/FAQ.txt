@@ -1,0 +1,174 @@
+Although the purpose of a FAQ is to answer questions that people have asked repeatedly, some of the
+answers here are for questions that have not been asked but probably will be. 
+
+THis is by no means a complete FAQ and should be considered a work in progress just as Batari Basic is. 
+This will be updated as I get more of the same question being asked or I think of more things that
+people might ask :)
+
+Q: I get a weird, cryptic error or errors when I try to compile.  What's the problem? 
+
+A: Most likely it's a bug in your code, and the compiler is not particularly good at identifying them
+for you.  It could very well be a bug in Batari Basic too, but make sure it's not before reporting it. 
+If Batari Basic does catch a bug, it will echo the line back to you with the problem. However, often a
+bug will be passed along to DASM and it will be caught there. 
+
+A common error in DASM is "branch out of range."  This may happen if smart branching is not enabled.  To
+enable smart branching, include the following statement at the beginning of your program: 
+
+ rem smartbranching on
+
+Smart branching is not enabled by default because it will complicate the assembly.  Since Batari Basic
+is intended as a stepping stone to assembly, you are encouraged to look at the created .asm file and
+learn from it. 
+
+To work without smartbranching on, you must place "then goto" in place of the "then" statement that
+caused the error.  To find the line number that contains the error, you may search the assembly fine as
+described below. 
+
+"Syntax error" could be anything, but is often caused by a typographical error. 
+
+Other errors in DASM often don't make any sense.  For example, "Label mismatch"  may not be a label
+mismatch at all, and is almost always caused by an unknown label, not a mismatch. 
+
+The best (and perhaps the only) way to find errors from the DASM output is to open the generated
+assembly file (with the .asm extension) and scroll down until you see the BASIC program code and the asm
+that it was compiled into. 
+
+Sometimes, DASM will report the line in the file where it found an error.  By "line of code" in DASM, it
+doesn't refer to the linenumber at all, but rather to the particular row of text in the .asm file. 
+However, many text editors do not tell you what line the cursor is on!  One way, in DOS, is to open the
+ASM filewith the EDIT command, which will display the row of text that the cursor is on. 
+
+For example: suppose DASM reported the following error:
+
+... dozens of label mismatches here ...
+
+test.asm (1476): error: Label mismatch...
+ --> 0.8000 f751                  
+test.asm (1576): error: Label mismatch...
+ --> 0.8010 f7b3                  
+      2035 bytes of ROM space left
+      2035 bytes of ROM space left
+      2035 bytes of ROM space left
+--- Unresolved Symbol List
+NO_ILLEGAL_OPCODES       0000 ????         (R )
+on                       0000 ????         (R )
+--- 2 Unresolved Symbols
+
+Fatal assembly error: Source is not resolvable.
+
+Sometimes the line in the file (such as 1476 or 1576) will reveal an error, but often it will not. 
+
+The problem in this case is not a label mismatch at all, but with the "on" unresolved symbol.  Looking
+at the assembly file reveals: 
+
+.1312 ; 1312 if k > h then pfvline 11 a on : a = a + 1
+
+        LDA k
+        CMP h
+     BCC .skip1312
+        LDX #11
+        LDY a
+        LDA on
+        STA temp3
+        LDA #0
+... and so on.
+
+The problem is subtle - an incorrect number of arguments were entered in the pfvline statement, and it
+thought "on" was a variable.  Adding the correct number of arguments not only fixes the unresolved
+symbol, but the label mismatches mysteriously go away. 
+
+This section will be updated as more cryptic errors are found to have somewhat reliable solutions. 
+
+Q: I wrote a program but I get a blank screen.  What gives?
+
+A: Make sure you are calling drawscreen somewhere in your game loop (and that your game runs in a loop!)
+If you are, you probably didn't set colors, as they are all black by default.  You use COLUP0 for
+player0 and missile0, COLUP1 for player1 and missile1, COLUPF for the playfield and ball, and COLUBK for
+the background. 
+
+Q: Why does my game jitter/shake/roll?
+
+A: This is a timing issue, caused by your program spending too much time in the game loop.  You have
+only about 2 milliseconds of time between successive calls to drawscreen, or about 2700 machine cycles. 
+It doesn't seem like much, but with efficient coding you can get quite a bit in here. 
+
+The drawscreen command must run 60 times a second, and it takes about 12 milliseconds to complete, as it
+renders the television display.  Your program must run while the television picture is off of the screen
+and blanked out. 
+
+The most common cause is probably too many calls to playfield plotting/scrolling routines or too many
+large loops, though other routines can also use up lots of time. 
+
+The only solution to this problem is to reduce the complexity of your program between calls to
+drawscreen, either by calling it more than once throughout your program or spreading your calculations
+across several frames (calls to drawscreen, that is.) Note that calling drawscreen several times without
+also moving your objects each time will slow down your game. 
+
+Q: How do you compile the sample program in Windows/How do I use DOS/Why can't I double-click on the
+2600basic batch file? 
+
+A: Batari Basic is a DOS program.  It won't run properly under Windows without running it under the
+Command Prompt, unless you use an external program such as the 2600IDE.  If you don't know much about
+DOS, I suggest using the 2600IDE for Windows, which is available on the Batari Basic home page.  Also,
+you could try searching the internet for a primer on DOS. 
+
+Q: What does (insert command here) do/What about (insert topic here)
+
+A: See the help.html file for a somewhat incomplete command/topic reference.
+
+Q: Why can't I do 10 print "hello world" : goto 10
+
+A: The 2600 is not designed for text.  It has no character set, and its graphics capabilities are very
+limited.  Furthermore, Batari Basic is intended for making graphical games, not text games. 
+
+Q: Why doesn't Batari Basic support (some BASIC construct, function, etc)
+
+A: Probably because it is pretty much impossible to do on the 2600.
+
+Q: Why BASIC?  Why not C, Perl, PHP, Awk, Iambic Pentameter, or whatnot?
+
+A: Basic is easy to learn and easy to compile, "everybody knows Basic" and it well-suited for the
+limitations of the 2600.  Remember, the Atari 2600 has 128 bytes of RAM.  Not Megabytes, or Kilobytes. 
+BYTES.  In other words, it has 0.000125 MB of RAM. 
+
+It also can address only 4 kilobytes of ROM.  Not Megabytes, 4k, or 4096 bytes. 
+
+Q: How can you do anything with 4k of ROM and 128 bytes of RAM?
+
+A: You just have to be creative and/or masochistic.
+
+Q: Why can't you make (insert advanced/popular/modern 2600 game here) in Batari Basic? 
+
+A: Many reasons.
+
+1. Many games use advanced kernels and dirty tricks that are written just for the particular game in
+question. Batari Basic's kernel is designed for flexibility so it could be capable of many games instead
+of just one.  Of course, in making a kernel as general as possible, you must also make compromises. 
+
+2. Assembly language has always been more capable than any BASIC could ever be.  Batari Basic is no
+exception. 
+
+3. There is currently only one kernel in Batari Basic.  I may write more kernels if I can think of ways
+to do so while being as flexible as possible. 
+
+Q. How can I help develop Batari Basic?
+
+A. We encourage any and all support and code contributions to this project.  We do not need or want 
+monetary support, however - this project is done by people who love to do this stuff.  If you think 
+you can help develop Batari BASIC, please let us know!
+
+One thing I'd really like is an experienced 2600 assembly programmer who is willing to write a new
+kernel or two.  We have some ideas for new kernels, but lack the time, and in some ways, the skill to
+write them.  Note that we cannot pay you to help us - but you will get credit for your work if it is
+included in a later release, and you get full bragging rights... 
+
+Q. How do I write my own kernel for use with Batari Basic?
+
+A. For information about kernels and 2600 assembly programming, I suggest reading Andrew Davie's
+tutorials.  By the time you know how to write a 2600 kernel, I imagine that you will also be
+knowledgeable enough to figure out how to adapt one to work with Batari Basic without needing to ask. 
+
+Q. Will you write me a custom kernel for a game I want to make?
+
+A. No.
